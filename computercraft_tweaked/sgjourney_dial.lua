@@ -2,15 +2,16 @@
 -- Tested with the Milky Way Stargate, but should likely work with other Stargates
 -- Made by EepyBerry :3
 
-------------------------     FUNCTIONS     ------------------------
-function dial(name, address)
+--------     FUNCTIONS     --------
+
+function dial(name, address, fastmode)
     if interface.isWormholeOpen() then
-        printError("[ERROR] Cannot dial location: wormhole already open!")
+        printError("[ERROR] Cannot dial location: wormhole already open!\n")
         return
     end
 
     print("[INFO] Starting dialing sequence to: " .. name)
-    redstone.setOutput("top", true) -- This is optional, useful if you'd like to trigger an alarm or something (e.g. using Create's Redstone Links)
+    redstone.setOutput("top", true)
     local start = interface.getChevronsEngaged() + 1
     local feedbackCode = interface.getRecentFeedback()
     for chevron = start,#address,1 do
@@ -22,25 +23,31 @@ function dial(name, address)
             return
         end
         
-        -- Rotate towards chevron
-        write("  [] Engaging chevron " .. chevron .. "...")
-        if chevron % 2 == 0 then
-            interface.rotateClockwise(symbol)
+        if fastmode then
+            write("  [] Engaging chevron " .. chevron .. "...")
+            interface.engageSymbol(symbol)
+            write(" success\n")
+            sleep(0.5)
         else
-            interface.rotateAntiClockwise(symbol)
+            -- Rotate towards chevron
+            write("  [] Engaging chevron " .. chevron .. "...")
+            if chevron % 2 == 0 then
+                interface.rotateClockwise(symbol)
+            else
+                interface.rotateAntiClockwise(symbol)
+            end
+            -- Wait for chevron to be selected
+            while (not interface.isCurrentSymbol(symbol)) do
+                sleep(0)
+            end
+            -- Engage chevron
+            sleep(1)
+            interface.openChevron()
+            sleep(1)
+            interface.closeChevron()
+            write(" success\n")
         end
-        -- Wait for chevron to be selected
-        while (not interface.isCurrentSymbol(symbol)) do
-            sleep(0)
-        end
-        -- Engage chevron
-        sleep(1)
-        interface.openChevron()
-        sleep(1)
-        interface.closeChevron()
-        write(" success\n")
         if not printFeedback(interface.getRecentFeedback) then
-            printError("[ERROR] Dialing sequence failed, disconnecting Stargate!")
             interface.disconnectStargate()
             return
         end
@@ -49,7 +56,7 @@ function dial(name, address)
     print("[INFO] Dialing sequence complete!")
     print("[INFO] Opening wormhole to: " .. name .. "\n")
     sleep(3)
-    redstone.setOutput("top", false) -- This is optional, useful if you'd like to trigger an alarm or something (e.g. using Create's Redstone Links)
+    redstone.setOutput("top", false)
 end
 
 function printFeedback(feedbackCode)
@@ -68,11 +75,12 @@ end
 
 function printHelp()
     print("[INFO] Available commands:")
-    print("  help            - show this prompt")
-    print("  net             - list available locations")
-    print("  dial <location> - dial Stargate at location")
-    print("  disconnect      - close the Stargate")
-    print("  exit            - exit the program\n")
+    print("  help             - show this prompt")
+    print("  net              - list available locations")
+    print("  dial <location>  - dial Stargate at location")
+    print("  fdial <location> - fast-dial Stargate at location")
+    print("  disconnect       - close the Stargate")
+    print("  exit             - exit the program\n")
 
 end
 
@@ -84,25 +92,24 @@ function printNetwork(net)
     print("")
 end
 
------------------------- NETWORK ADDRESSES ------------------------
+-------- NETWORK ADDRESSES --------
+
 network = 
 {
   { name = "abydos", addr = {26,6,14,31,11,29,0}     },
   { name = "chulak", addr = {8,1,22,14,36,19,0}      },
   { name = "lantea", addr = {18,20,1,15,14,7,19,0}   },
-  -- Add your custom addresses here!
-  -- Don't forget the "Point of Origin" at the last position (which is always 0)!
 }
 
-------------------------   MAIN PROGRAM    ------------------------
+--------   MAIN PROGRAM    --------
+
 print("###################################################")
 print("#    +                                       +    #")
 print("#  +          STARGATE INTERFACE v1.0          +  #")
 print("#    +                                       +    #")
-print("###################################################")
-print("")
+print("###################################################\n")
 
-interface = peripheral.find("basic_interface") 
+interface = peripheral.find("crystal_interface") -- fast-dialing requires a Crystal Interface at minimum; replace with "basic_interface" if you don't want/need it
 if interface == nil then
   printError("[ERROR] Stargate Interface unavailable")
   return
@@ -142,12 +149,14 @@ while true do
         goto continue
     end
     
-    -- dial command
-    local maybeDial = input:find("^dial (.*)")
+    -- dial/fdial command
+    local maybeDial = input:find("^(f?)dial (.*)")
     if maybeDial ~= nil then
+        fastDial = (input:sub(1,1) == 'f')
+        locIdx = (fastDial and 7 or 6)
         netAddr = nil
         for k,v in ipairs(network) do
-            if v.name == input:sub(6) then
+            if v.name == input:sub(locIdx) then
                 netAddr = v.addr
                 break
             end
@@ -156,7 +165,8 @@ while true do
             printError("[ERROR] Invalid location!")
             printNetwork(network)
         else
-            dial(input:sub(6), netAddr)
+            dial(input:sub(locIdx), netAddr, fastDial)
         end
     end
 end
+
