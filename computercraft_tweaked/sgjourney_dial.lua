@@ -1,7 +1,6 @@
 -- Dialing program for Stargate Journey
 -- Tested with the Milky Way Stargate, but should likely work with other Stargates
 -- Made by EepyBerry :3
-
 --------     FUNCTIONS     --------
 
 function dial(name, address, fastmode)
@@ -82,12 +81,13 @@ end
 
 function printHelp()
     print("[INFO] Available commands:")
-    print("  help             - show this prompt")
-    print("  net              - list available locations")
-    print("  dial <location>  - dial Stargate at location")
-    print("  fdial <location> - fast-dial Stargate at location")
-    print("  disconnect       - close the Stargate")
-    print("  exit             - exit the program\n")
+    print("  help              - show this prompt")
+    print("  net               - list available locations")
+    print("  dial <location>   - dial Stargate @ location")
+    print("  fdial <location>  - fast-dial Stargate @ location")
+    print("  iris <open/close> - open or close the Iris")
+    print("  disconnect        - close the Stargate")
+    print("  exit              - exit the program\n")
 
 end
 
@@ -103,14 +103,11 @@ end
 
 network = 
 {
-  { name = "abydos", addr = {26,6,14,31,11,29,0}     },
-  { name = "chulak", addr = {8,1,22,14,36,19,0}      },
-  { name = "lantea", addr = {18,20,1,15,14,7,19,0}   },
-  { name = "brain",  addr = {4,5,22,28,32,29,1,16,0} },
+  { name = "abydos",  addr = {26,6,14,31,11,29,0}     },
+  { name = "chulak",  addr = {8,1,22,14,36,19,0}      },
+  { name = "lantea",  addr = {18,20,1,15,14,7,19,0}   },
 }
-
 --------   MAIN PROGRAM    --------
-
 print("###################################################")
 print("#    +                                       +    #")
 print("#  +          STARGATE INTERFACE v1.0          +  #")
@@ -148,7 +145,7 @@ while true do
     -- disconnect command
     if input == "disconnect" then
         interface.disconnectStargate()
-        print("[INFO] Stargate disconnected.\n")
+        print("[INFO] Stargate disconnected\n")
         goto continue
     end
     
@@ -157,6 +154,30 @@ while true do
         printNetwork(network)
         goto continue
     end
+    
+    -- iris command
+    local maybeIris = input:find("^iris (.*)")
+    if maybeIris ~= nil then
+        irisState = input:sub(6)
+        if irisState == "open" then
+            local opening = interface.openIris()
+            if opening then
+                print("[INFO] Iris opened")
+            else
+                printError("[ERROR] Iris already open!")
+            end
+        elseif irisState == "close" then
+            local closing = interface.closeIris()
+            if closing then
+                print("[INFO] Iris closed")
+            else
+                printError("[ERROR] Iris already closed!")
+            end
+        else
+            printError("[ERROR] Invalid iris command\n")
+        end
+    end
+        
     
     -- dial/fdial command
     local maybeDial = input:find("^(f?)dial (.*)")
@@ -178,4 +199,3 @@ while true do
         end
     end
 end
-
