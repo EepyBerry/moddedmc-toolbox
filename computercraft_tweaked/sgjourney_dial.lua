@@ -9,7 +9,15 @@ function dial(name, address, fastmode)
         printError("[ERROR] Cannot dial location: wormhole already open!\n")
         return
     end
+    
+    -- Set chevron configuration (aesthetics)
+    if #address == 9 then
+        interface.setChevronConfiguration({1,2,3,4,5,6,7,8})
+    else
+        interface.setChevronConfiguration({1,2,3,6,7,8,4,5})
+    end
 
+    -- Start dialing sequence
     print("[INFO] Starting dialing sequence to: " .. name)
     redstone.setOutput("top", true)
     local start = interface.getChevronsEngaged() + 1
@@ -27,7 +35,6 @@ function dial(name, address, fastmode)
             write("  [] Engaging chevron " .. chevron .. "...")
             interface.engageSymbol(symbol)
             write(" success\n")
-            sleep(0.5)
         else
             -- Rotate towards chevron
             write("  [] Engaging chevron " .. chevron .. "...")
@@ -99,6 +106,7 @@ network =
   { name = "abydos", addr = {26,6,14,31,11,29,0}     },
   { name = "chulak", addr = {8,1,22,14,36,19,0}      },
   { name = "lantea", addr = {18,20,1,15,14,7,19,0}   },
+  { name = "brain",  addr = {4,5,22,28,32,29,1,16,0} },
 }
 
 --------   MAIN PROGRAM    --------
@@ -107,9 +115,10 @@ print("###################################################")
 print("#    +                                       +    #")
 print("#  +          STARGATE INTERFACE v1.0          +  #")
 print("#    +                                       +    #")
-print("###################################################\n")
+print("###################################################")
+print("")
 
-interface = peripheral.find("crystal_interface") -- fast-dialing requires a Crystal Interface at minimum; replace with "basic_interface" if you don't want/need it
+interface = peripheral.find("crystal_interface") 
 if interface == nil then
   printError("[ERROR] Stargate Interface unavailable")
   return
