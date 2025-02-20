@@ -53,8 +53,10 @@ function dial(name, address, fastmode)
             interface.closeChevron()
             write(" success\n")
         end
-        if not printFeedback(interface.getRecentFeedback) then
+        if not printFeedback(interface.getRecentFeedback()) then
             interface.disconnectStargate()
+            redstone.setOutput("top", false)
+            print("")
             return
         end
         sleep(1)
@@ -74,6 +76,9 @@ function printFeedback(feedbackCode)
         return false
     elseif feedbackCode == -5 then
         printError("  !! Dialing failure: invalid address")
+        return false
+    elseif feedbackCode == -10 then
+        printError("  !! Dialing failure: self-dial")
         return false
     end
     return true
@@ -107,6 +112,7 @@ network =
   { name = "chulak",  addr = {8,1,22,14,36,19,0}      },
   { name = "lantea",  addr = {18,20,1,15,14,7,19,0}   },
 }
+
 --------   MAIN PROGRAM    --------
 print("###################################################")
 print("#    +                                       +    #")
@@ -176,6 +182,7 @@ while true do
         else
             printError("[ERROR] Invalid iris command\n")
         end
+        goto continue
     end
         
     
@@ -197,5 +204,8 @@ while true do
         else
             dial(input:sub(locIdx), netAddr, fastDial)
         end
+        goto continue
     end
+    
+    printError("[ERROR] Invalid command\n")
 end
